@@ -12,6 +12,8 @@ import * as path from 'path';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 
 import { CommonModule } from '@src/common/common.module';
+import { User } from '@src/users/entities/user.entity';
+import { UsersModule } from '@src/users/users.module';
 
 @Module({
   imports: [
@@ -48,7 +50,7 @@ import { CommonModule } from '@src/common/common.module';
       bigNumberStrings: false,
       logging: false,
       charset: 'utf8mb4',
-      entities: [],
+      entities: [User],
     }),
     ScheduleModule.forRoot(),
     I18nModule.forRoot({
@@ -60,6 +62,7 @@ import { CommonModule } from '@src/common/common.module';
       resolvers: [new HeaderResolver(['x-user-lang'])],
     }),
     CommonModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],
