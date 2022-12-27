@@ -2,7 +2,7 @@ import { HttpException } from '@nestjs/common';
 import { CoreOutput } from '@src/common/dtos/output.dto';
 
 export function apiResult(result: CoreOutput) {
-  const { ok, error, httpErrorCode } = result;
+  const { ok, error } = result;
 
   if (!ok && error) {
     throw new HttpException(
@@ -10,7 +10,7 @@ export function apiResult(result: CoreOutput) {
         ok: false,
         error: error,
       },
-      httpErrorCode || 400,
+      error.statusCode,
     );
   }
 
