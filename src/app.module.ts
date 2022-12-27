@@ -12,6 +12,10 @@ import * as path from 'path';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 
 import { CommonModule } from '@src/common/common.module';
+
+import { JwtModule } from '@src/jwt/jwt.module';
+import { JwtMiddleware } from '@src/jwt/jwt.middleware';
+
 import { User } from '@src/users/entities/user.entity';
 import { UsersModule } from '@src/users/users.module';
 
@@ -61,6 +65,9 @@ import { UsersModule } from '@src/users/users.module';
       },
       resolvers: [new HeaderResolver(['x-user-lang'])],
     }),
+    JwtModule.forRoot({
+      privateKey: process.env.JWT_PRIVATE_KEY,
+    }),
     CommonModule,
     UsersModule,
   ],
@@ -69,9 +76,9 @@ import { UsersModule } from '@src/users/users.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // consumer.apply(JwtMiddleware).forRoutes({
-    //   path: '*',
-    //   method: RequestMethod.ALL,
-    // });
+    consumer.apply(JwtMiddleware).forRoutes({
+      path: '*',
+      method: RequestMethod.ALL,
+    });
   }
 }
