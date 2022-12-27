@@ -127,7 +127,6 @@ class ErrorOutput {
 }
 
 export class CoreOutput {
-  error?: ErrorOutput;
-  httpErrorCode?: number;
   ok: boolean;
+  error?: ErrorOutput;
 }
