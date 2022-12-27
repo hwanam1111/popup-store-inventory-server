@@ -16,6 +16,8 @@ import { CommonModule } from '@src/common/common.module';
 import { JwtModule } from '@src/jwt/jwt.module';
 import { JwtMiddleware } from '@src/jwt/jwt.middleware';
 
+import { AuthModule } from '@src/auth/auth.module';
+
 import { User } from '@src/users/entities/user.entity';
 import { UsersModule } from '@src/users/users.module';
 
@@ -69,6 +71,7 @@ import { UsersModule } from '@src/users/users.module';
       privateKey: process.env.JWT_PRIVATE_KEY,
     }),
     CommonModule,
+    AuthModule,
     UsersModule,
   ],
   controllers: [],

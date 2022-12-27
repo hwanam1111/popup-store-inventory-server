@@ -15,6 +15,7 @@ import {
   FetchUserParam,
 } from '@src/users/dtos/fetch-user.dto';
 import { LoginInput, LoginOutput } from '@src/users/dtos/login.dto';
+import { FetchMeOutput } from '@src/users/dtos/fetch-me.dto';
 
 @Injectable()
 export class UsersService {
@@ -141,6 +142,37 @@ export class UsersService {
       return {
         ok: true,
         user,
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          serverError: err,
+        },
+        500,
+      );
+    }
+  }
+
+  async fetchMe(me: User): Promise<FetchMeOutput> {
+    try {
+      if (!me) {
+        return {
+          ok: true,
+          me: null,
+        };
+      }
+
+      const { id, email, name, role, createdAt } = me;
+
+      return {
+        ok: true,
+        me: {
+          id,
+          email,
+          name,
+          role,
+          createdAt,
+        },
       };
     } catch (err) {
       throw new HttpException(
