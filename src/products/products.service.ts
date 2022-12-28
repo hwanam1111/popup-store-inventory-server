@@ -67,6 +67,18 @@ export class ProductsService {
     me: User,
   ): Promise<CreateProductOutput> {
     try {
+      const isExistProduct = await this.fetchProductByBarcode({ barcode });
+      if (isExistProduct.ok) {
+        return {
+          ok: false,
+          error: {
+            statusCode: 403,
+            statusType: 'FORBIDDEN',
+            message: 'exist-product',
+          },
+        };
+      }
+
       const createdProduct = await this.products.save(
         this.products.create({
           barcode,
