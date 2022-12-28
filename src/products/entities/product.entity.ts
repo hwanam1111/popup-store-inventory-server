@@ -22,7 +22,7 @@ export type CountryCode = Union<typeof countryCode>;
 
 @Entity()
 export class Product extends IncludeSoftDeleteCoreEntity {
-  @Column({ length: 100 })
+  @Column({ length: 100, unique: true })
   barcode: string;
 
   @Column({ length: 500 })
