@@ -1,9 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
-import { IncludeSoftDeleteCoreEntity } from '@src/common/entities/common.entity';
 import { Union } from '@src/utils/union-type';
+
+import { IncludeSoftDeleteCoreEntity } from '@src/common/entities/common.entity';
+import { Product } from '@src/products/entities/product.entity';
 
 const userRole = {
   ReadOnly: 'ReadOnly',
@@ -25,6 +27,9 @@ export class User extends IncludeSoftDeleteCoreEntity {
 
   @Column({ length: 100 })
   name: string;
+
+  @OneToMany(() => Product, (product) => product.createdUser)
+  createdProducts: Product[];
 
   @BeforeInsert()
   @BeforeUpdate()
