@@ -16,6 +16,8 @@ import { CommonModule } from '@src/common/common.module';
 import { JwtModule } from '@src/jwt/jwt.module';
 import { JwtMiddleware } from '@src/jwt/jwt.middleware';
 
+import { FilesModule } from '@src/files/files.module';
+
 import { AuthModule } from '@src/auth/auth.module';
 
 import { User } from '@src/users/entities/user.entity';
@@ -69,6 +71,14 @@ import { UsersModule } from '@src/users/users.module';
     }),
     JwtModule.forRoot({
       privateKey: process.env.JWT_PRIVATE_KEY,
+    }),
+    FilesModule.forRoot({
+      awsS3Url: process.env.AWS_S3_URL,
+      awsS3AccessKey: process.env.AWS_S3_ACCESS_KEY,
+      awsS3SecretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
+      awsS3BucketName: process.env.AWS_S3_BUCKET_NAME,
+      awsS3Region: process.env.AWS_S3_REGION,
+      awsCloudFrontResUrl: process.env.AWS_CLOUD_FRONT_RES_URL,
     }),
     CommonModule,
     AuthModule,
