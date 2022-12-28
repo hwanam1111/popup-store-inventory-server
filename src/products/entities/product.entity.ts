@@ -12,13 +12,13 @@ export const currencyUnit = {
 } as const;
 export type CurrencyUnit = Union<typeof currencyUnit>;
 
-export const countryCode = {
-  DE: 'DE',
-  BE: 'BE',
-  ES: 'ES',
-  FR: 'FR',
+export const countryName = {
+  Germany: 'Germany',
+  Belgium: 'Belgium',
+  Spain: 'Spain',
+  France: 'France',
 } as const;
-export type CountryCode = Union<typeof countryCode>;
+export type CountryName = Union<typeof countryName>;
 
 @Entity()
 export class Product extends IncludeSoftDeleteCoreEntity {
@@ -37,8 +37,8 @@ export class Product extends IncludeSoftDeleteCoreEntity {
   @Column({ type: 'enum', enum: currencyUnit })
   sellingCurrency: CurrencyUnit;
 
-  @Column({ type: 'enum', enum: countryCode })
-  sellingCountry: CountryCode;
+  @Column({ type: 'enum', enum: countryName })
+  sellingCountry: CountryName;
 
   @Column({ type: 'int' })
   productQuantity: number;
