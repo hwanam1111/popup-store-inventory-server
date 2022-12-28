@@ -5,7 +5,7 @@ import { Union } from '@src/utils/union-type';
 import { IncludeSoftDeleteCoreEntity } from '@src/common/entities/common.entity';
 import { User } from '@src/users/entities/user.entity';
 
-const currencyUnit = {
+export const currencyUnit = {
   KRW: 'KRW',
   EUR: 'EUR',
   USD: 'USD',
@@ -29,6 +29,9 @@ export class Product extends IncludeSoftDeleteCoreEntity {
   @Column({ type: 'enum', enum: currencyUnit })
   sellingCurrency: CurrencyUnit;
 
-  @ManyToOne(() => User, (user) => user.createdProducts)
+  @ManyToOne(() => User, (user) => user.createdProducts, {
+    onDelete: 'NO ACTION',
+    nullable: false,
+  })
   createdUser: User;
 }
