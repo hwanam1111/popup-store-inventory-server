@@ -4,6 +4,8 @@ import { CoreOutput } from '@src/common/dtos/output.dto';
 import {
   currencyUnit,
   CurrencyUnit,
+  countryCode,
+  CountryCode,
 } from '@src/products/entities/product.entity';
 
 export class CreateProductInput {
@@ -24,6 +26,9 @@ export class CreateProductInput {
 
   @IsEnum(currencyUnit)
   sellingCurrency: CurrencyUnit;
+
+  @IsEnum(countryCode)
+  sellingCountry: CountryCode;
 }
 
 export class CreateProductOutput extends CoreOutput {
