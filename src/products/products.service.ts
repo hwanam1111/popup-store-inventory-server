@@ -63,6 +63,7 @@ export class ProductsService {
       productAmount,
       sellingCurrency,
       sellingCountry,
+      productQuantity,
     }: CreateProductInput,
     me: User,
   ): Promise<CreateProductOutput> {
@@ -92,6 +93,7 @@ export class ProductsService {
           productAmount,
           sellingCurrency,
           sellingCountry,
+          productQuantity,
           createdUser: me,
         }),
       );

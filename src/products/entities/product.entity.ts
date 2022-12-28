@@ -40,6 +40,9 @@ export class Product extends IncludeSoftDeleteCoreEntity {
   @Column({ type: 'enum', enum: countryCode })
   sellingCountry: CountryCode;
 
+  @Column({ type: 'int' })
+  productQuantity: number;
+
   @ManyToOne(() => User, (user) => user.createdProducts, {
     onDelete: 'NO ACTION',
     nullable: false,

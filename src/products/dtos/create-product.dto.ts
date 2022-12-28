@@ -29,6 +29,9 @@ export class CreateProductInput {
 
   @IsEnum(countryCode)
   sellingCountry: CountryCode;
+
+  @IsNumber()
+  productQuantity: number;
 }
 
 export class CreateProductOutput extends CoreOutput {
