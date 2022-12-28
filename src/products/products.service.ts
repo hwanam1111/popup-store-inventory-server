@@ -67,6 +67,23 @@ export class ProductsService {
     me: User,
   ): Promise<CreateProductOutput> {
     try {
+      const existProduct = await this.products.findOne({
+        where: {
+          barcode,
+          sellingCountry,
+        },
+      });
+      if (existProduct) {
+        return {
+          ok: false,
+          error: {
+            statusCode: 403,
+            statusType: 'FORBIDDEN',
+            message: 'exist-product',
+          },
+        };
+      }
+
       const createdProduct = await this.products.save(
         this.products.create({
           barcode,
