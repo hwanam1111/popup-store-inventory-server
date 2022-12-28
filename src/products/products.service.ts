@@ -10,12 +10,50 @@ import {
   CreateProductInput,
   CreateProductOutput,
 } from '@src/products/dtos/create-product.dto';
+import {
+  FetchProductByBarcodeParam,
+  FetchProductByBarcodeOutput,
+} from '@src/products/dtos/fetch-product-by-barcode.dto';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product) private readonly products: Repository<Product>,
   ) {}
+
+  async fetchProductByBarcode({
+    barcode,
+  }: FetchProductByBarcodeParam): Promise<FetchProductByBarcodeOutput> {
+    try {
+      const product = await this.products.findOne({
+        where: { barcode },
+      });
+
+      if (!product) {
+        return {
+          ok: false,
+          error: {
+            statusCode: 403,
+            statusType: 'FORBIDDEN',
+            message: 'product-not-found',
+          },
+        };
+      }
+
+      return {
+        ok: true,
+        product,
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    }
+  }
 
   async createProduct(
     {
