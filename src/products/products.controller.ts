@@ -1,4 +1,11 @@
-import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  ValidationPipe,
+} from '@nestjs/common';
 
 import { apiResult } from '@src/api-result';
 
@@ -12,13 +19,30 @@ import {
   CreateProductInput,
   CreateProductOutput,
 } from '@src/products/dtos/create-product.dto';
+import {
+  FetchProductByBarcodeParam,
+  FetchProductByBarcodeOutput,
+} from '@src/products/dtos/fetch-product-by-barcode.dto';
 
 @Controller('v1/products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @Post('/')
+  @Get('/barcode/:barcode')
   @Role(['Any'])
+  async fetchProductByBarcode(
+    @Param(ValidationPipe)
+    fetchProductByBarcodeParam: FetchProductByBarcodeParam,
+  ): Promise<FetchProductByBarcodeOutput> {
+    return apiResult(
+      await this.productsService.fetchProductByBarcode(
+        fetchProductByBarcodeParam,
+      ),
+    );
+  }
+
+  @Post('/')
+  @Role(['Manager', 'RootAdmin'])
   async createProduct(
     @Body(ValidationPipe) createProductInput: CreateProductInput,
     @AuthUser() me: User,

@@ -12,6 +12,14 @@ export const currencyUnit = {
 } as const;
 export type CurrencyUnit = Union<typeof currencyUnit>;
 
+export const countryName = {
+  Germany: 'Germany',
+  Belgium: 'Belgium',
+  Spain: 'Spain',
+  France: 'France',
+} as const;
+export type CountryName = Union<typeof countryName>;
+
 @Entity()
 export class Product extends IncludeSoftDeleteCoreEntity {
   @Column({ length: 100 })
@@ -28,6 +36,12 @@ export class Product extends IncludeSoftDeleteCoreEntity {
 
   @Column({ type: 'enum', enum: currencyUnit })
   sellingCurrency: CurrencyUnit;
+
+  @Column({ type: 'enum', enum: countryName })
+  sellingCountry: CountryName;
+
+  @Column({ type: 'int' })
+  productQuantity: number;
 
   @ManyToOne(() => User, (user) => user.createdProducts, {
     onDelete: 'NO ACTION',
