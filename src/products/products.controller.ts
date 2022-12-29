@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   ValidationPipe,
 } from '@nestjs/common';
 
@@ -23,6 +24,10 @@ import {
   FetchProductByBarcodeParam,
   FetchProductByBarcodeOutput,
 } from '@src/products/dtos/fetch-product-by-barcode.dto';
+import {
+  FetchProductsOutput,
+  FetchProductsQuery,
+} from '@src/products/dtos/fetch-products.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -49,6 +54,17 @@ export class ProductsController {
   ): Promise<CreateProductOutput> {
     return apiResult(
       await this.productsService.createProduct(createProductInput, me),
+    );
+  }
+
+  @Get('/')
+  @Role(['Any'])
+  async fetchProducts(
+    @Query(ValidationPipe)
+    fetchProductQuery: FetchProductsQuery,
+  ): Promise<FetchProductsOutput> {
+    return apiResult(
+      await this.productsService.fetchProducts(fetchProductQuery),
     );
   }
 }
