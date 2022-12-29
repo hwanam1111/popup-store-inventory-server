@@ -14,6 +14,10 @@ import {
   FetchProductByBarcodeParam,
   FetchProductByBarcodeOutput,
 } from '@src/products/dtos/fetch-product-by-barcode.dto';
+import {
+  FetchProductsOutput,
+  FetchProductsQuery,
+} from '@src/products/dtos/fetch-products.dto';
 
 @Injectable()
 export class ProductsService {
@@ -103,6 +107,52 @@ export class ProductsService {
         product: {
           id: createdProduct.id,
         },
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    }
+  }
+
+  async fetchProducts({
+    sellingCountry,
+    page,
+    limit,
+  }: FetchProductsQuery): Promise<FetchProductsOutput> {
+    try {
+      const [products, totalProducts] = await this.products.findAndCount({
+        take: limit,
+        skip: (page - 1) * limit,
+        order: {
+          id: 'DESC',
+        },
+        ...(sellingCountry && {
+          where: {
+            sellingCountry,
+          },
+        }),
+      });
+
+      const includeInventoryProducts: FetchProductsOutput['products'] = [];
+      for (const product of products) {
+        const includeInventoryProduct = {
+          ...product,
+          soldQuantity: 55345,
+          remainingQuantity: 30023,
+        };
+        includeInventoryProducts.push(includeInventoryProduct);
+      }
+
+      return {
+        ok: true,
+        totalPages: Math.ceil(totalProducts / limit),
+        totalResults: totalProducts,
+        products: includeInventoryProducts,
       };
     } catch (err) {
       throw new HttpException(
