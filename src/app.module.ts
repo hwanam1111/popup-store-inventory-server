@@ -24,6 +24,7 @@ import { User } from '@src/users/entities/user.entity';
 import { UsersModule } from '@src/users/users.module';
 
 import { Product } from '@src/products/entities/product.entity';
+import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 import { ProductsModule } from '@src/products/products.module';
 
 @Module({
@@ -61,7 +62,7 @@ import { ProductsModule } from '@src/products/products.module';
       bigNumberStrings: false,
       logging: false,
       charset: 'utf8mb4',
-      entities: [User, Product],
+      entities: [User, Product, ProductForward],
     }),
     ScheduleModule.forRoot(),
     I18nModule.forRoot({

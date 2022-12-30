@@ -2,11 +2,11 @@ import { IsEnum, IsNumber, IsString, Length } from 'class-validator';
 
 import { CoreOutput } from '@src/common/dtos/output.dto';
 import {
-  currencyUnit,
-  CurrencyUnit,
-  countryName,
   CountryName,
-} from '@src/products/entities/product.entity';
+  countryName,
+  CurrencyUnit,
+  currencyUnit,
+} from '@src/products/products.enum';
 
 export class CreateProductInput {
   @IsString()

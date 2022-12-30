@@ -4,11 +4,9 @@ import {
   PaginationInput,
   PaginationOutput,
 } from '@src/common/dtos/pagination.dto';
-import {
-  CountryName,
-  countryName,
-  Product,
-} from '@src/products/entities/product.entity';
+import { Product } from '@src/products/entities/product.entity';
+
+import { CountryName, countryName } from '@src/products/products.enum';
 
 export class FetchProductsQuery extends PaginationInput {
   @IsOptional()
@@ -16,11 +14,6 @@ export class FetchProductsQuery extends PaginationInput {
   sellingCountry?: CountryName;
 }
 
-class InventoryOutput {
-  remainingQuantity: number;
-  soldQuantity: number;
-}
-
 export class FetchProductsOutput extends PaginationOutput {
-  products?: (Product | InventoryOutput)[];
+  products?: (Product | { remainingQuantity: number; soldQuantity: number })[];
 }
