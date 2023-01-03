@@ -23,6 +23,10 @@ import {
   ForwardingProductInput,
   ForwardingProductOutput,
 } from '@src/products/dtos/forwarding-product.dto';
+import {
+  FetchForwardedProductsQuery,
+  FetchForwardedProductsOutput,
+} from '@src/products/dtos/fetch-forwarded-products.dto';
 
 @Injectable()
 export class ProductsService {
@@ -264,6 +268,44 @@ export class ProductsService {
       );
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async fetchForwardedProducts({
+    sellingCountry,
+    page,
+    limit,
+  }: FetchForwardedProductsQuery): Promise<FetchForwardedProductsOutput> {
+    try {
+      const [forwardedProducts, totalForwardedProducts] =
+        await this.productsForward.findAndCount({
+          relations: ['product', 'productForwardedUser'],
+          take: limit,
+          skip: (page - 1) * limit,
+          order: {
+            id: 'DESC',
+          },
+          ...(sellingCountry && {
+            where: {
+              sellingCountry,
+            },
+          }),
+        });
+
+      return {
+        ok: true,
+        totalPages: Math.ceil(totalForwardedProducts / limit),
+        totalResults: totalForwardedProducts,
+        forwardedProducts,
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
     }
   }
 }

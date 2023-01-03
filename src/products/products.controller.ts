@@ -32,6 +32,10 @@ import {
   ForwardingProductInput,
   ForwardingProductOutput,
 } from '@src/products/dtos/forwarding-product.dto';
+import {
+  FetchForwardedProductsQuery,
+  FetchForwardedProductsOutput,
+} from '@src/products/dtos/fetch-forwarded-products.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -81,6 +85,19 @@ export class ProductsController {
   ): Promise<ForwardingProductOutput> {
     return apiResult(
       await this.productsService.forwardingProduct(forwardingProductInput, me),
+    );
+  }
+
+  @Get('/forwarded')
+  @Role(['Any'])
+  async fetchForwardedProducts(
+    @Query(ValidationPipe)
+    fetchForwardedProductsQuery: FetchForwardedProductsQuery,
+  ): Promise<FetchForwardedProductsOutput> {
+    return apiResult(
+      await this.productsService.fetchForwardedProducts(
+        fetchForwardedProductsQuery,
+      ),
     );
   }
 }
