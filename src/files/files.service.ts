@@ -15,6 +15,7 @@ import {
   ImagesUploadInput,
   ImagesUploadOutput,
 } from '@src/files/dtos/images-upload.dto';
+import { compressImage } from '@src/libs/compress-image';
 
 @Injectable()
 export class FilesService {
@@ -44,8 +45,9 @@ export class FilesService {
       const fileName = fileKey.split('/').reverse()[0];
       const originalFileName = file.originalname;
 
-      await s3CopyObject(fileKey, fileName, moveDirectoryLocation);
-      await s3RemoveObject(fileKey);
+      const compressedKey = await compressImage(fileKey);
+      await s3CopyObject(compressedKey, fileName, moveDirectoryLocation);
+      await s3RemoveObject(compressedKey);
 
       return {
         ok: true,
@@ -89,8 +91,9 @@ export class FilesService {
         const fileName = fileKey.split('/').reverse()[0];
         const originalFileName = file.originalname;
 
-        await s3CopyObject(fileKey, fileName, moveDirectoryLocation);
-        await s3RemoveObject(fileKey);
+        const compressedKey = await compressImage(fileKey);
+        await s3CopyObject(compressedKey, fileName, moveDirectoryLocation);
+        await s3RemoveObject(compressedKey);
 
         images.push({
           url: `${this.options.awsCloudFrontResUrl}/${moveDirectoryLocation}/${fileName}`,
