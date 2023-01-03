@@ -1,4 +1,6 @@
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
+
+import { CoreEntity } from '@src/common/entities/common.entity';
 
 import {
   CountryName,
@@ -7,12 +9,11 @@ import {
   currencyUnit,
 } from '@src/products/products.enum';
 
-import { IncludeSoftDeleteCoreEntity } from '@src/common/entities/common.entity';
-import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 import { User } from '@src/users/entities/user.entity';
+import { Product } from '@src/products/entities/product.entity';
 
 @Entity()
-export class Product extends IncludeSoftDeleteCoreEntity {
+export class ProductForward extends CoreEntity {
   @Column({ length: 100 })
   barcode: string;
 
@@ -32,14 +33,17 @@ export class Product extends IncludeSoftDeleteCoreEntity {
   sellingCountry: CountryName;
 
   @Column({ type: 'int' })
-  productQuantity: number;
+  remainingQuantity: number;
 
-  @ManyToOne(() => User, (user) => user.createdProducts, {
+  @ManyToOne(() => Product, (product) => product.forwardedProduct, {
     onDelete: 'NO ACTION',
     nullable: false,
   })
-  createdUser: User;
+  product: Product;
 
-  @OneToMany(() => ProductForward, (productForward) => productForward.product)
-  forwardedProduct: ProductForward[];
+  @ManyToOne(() => User, (user) => user.forwardedProduct, {
+    onDelete: 'NO ACTION',
+    nullable: false,
+  })
+  productForwardedUser: User;
 }

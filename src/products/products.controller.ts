@@ -28,6 +28,14 @@ import {
   FetchProductsOutput,
   FetchProductsQuery,
 } from '@src/products/dtos/fetch-products.dto';
+import {
+  ForwardingProductInput,
+  ForwardingProductOutput,
+} from '@src/products/dtos/forwarding-product.dto';
+import {
+  FetchForwardedProductsQuery,
+  FetchForwardedProductsOutput,
+} from '@src/products/dtos/fetch-forwarded-products.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -65,6 +73,31 @@ export class ProductsController {
   ): Promise<FetchProductsOutput> {
     return apiResult(
       await this.productsService.fetchProducts(fetchProductQuery),
+    );
+  }
+
+  @Post('/forwarding')
+  @Role(['Manager', 'RootAdmin'])
+  async forwardingProduct(
+    @Body(ValidationPipe)
+    forwardingProductInput: ForwardingProductInput,
+    @AuthUser() me: User,
+  ): Promise<ForwardingProductOutput> {
+    return apiResult(
+      await this.productsService.forwardingProduct(forwardingProductInput, me),
+    );
+  }
+
+  @Get('/forwarded')
+  @Role(['Any'])
+  async fetchForwardedProducts(
+    @Query(ValidationPipe)
+    fetchForwardedProductsQuery: FetchForwardedProductsQuery,
+  ): Promise<FetchForwardedProductsOutput> {
+    return apiResult(
+      await this.productsService.fetchForwardedProducts(
+        fetchForwardedProductsQuery,
+      ),
     );
   }
 }

@@ -6,6 +6,7 @@ import { Union } from '@src/utils/union-type';
 
 import { IncludeSoftDeleteCoreEntity } from '@src/common/entities/common.entity';
 import { Product } from '@src/products/entities/product.entity';
+import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 
 const userRole = {
   ReadOnly: 'ReadOnly',
@@ -30,6 +31,12 @@ export class User extends IncludeSoftDeleteCoreEntity {
 
   @OneToMany(() => Product, (product) => product.createdUser)
   createdProducts: Product[];
+
+  @OneToMany(
+    () => ProductForward,
+    (productForward) => productForward.productForwardedUser,
+  )
+  forwardedProduct: ProductForward[];
 
   @BeforeInsert()
   @BeforeUpdate()
