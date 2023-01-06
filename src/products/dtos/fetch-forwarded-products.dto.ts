@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional } from 'class-validator';
 
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 
@@ -13,6 +13,10 @@ export class FetchForwardedProductsQuery extends PaginationInput {
   @IsEnum(countryName)
   @IsOptional()
   sellingCountry?: CountryName;
+
+  @IsNumber()
+  @IsOptional()
+  productId: number;
 }
 
 export class FetchForwardedProductsOutput extends PaginationOutput {
