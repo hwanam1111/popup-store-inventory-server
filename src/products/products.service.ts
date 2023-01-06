@@ -151,10 +151,16 @@ export class ProductsService {
 
       const includeInventoryProducts: FetchProductsOutput['products'] = [];
       for (const product of products) {
+        const forwardedCount = await this.productsForward.count({
+          where: {
+            product,
+          },
+        });
+
         const includeInventoryProduct = {
           ...product,
-          soldQuantity: 55345,
-          remainingQuantity: 30023,
+          soldQuantity: forwardedCount,
+          remainingQuantity: product.productQuantity - forwardedCount,
         };
         includeInventoryProducts.push(includeInventoryProduct);
       }
