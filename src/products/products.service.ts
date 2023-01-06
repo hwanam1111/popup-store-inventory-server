@@ -151,10 +151,16 @@ export class ProductsService {
 
       const includeInventoryProducts: FetchProductsOutput['products'] = [];
       for (const product of products) {
+        const forwardedCount = await this.productsForward.count({
+          where: {
+            product,
+          },
+        });
+
         const includeInventoryProduct = {
           ...product,
-          soldQuantity: 55345,
-          remainingQuantity: 30023,
+          soldQuantity: forwardedCount,
+          remainingQuantity: product.productQuantity - forwardedCount,
         };
         includeInventoryProducts.push(includeInventoryProduct);
       }
@@ -273,10 +279,26 @@ export class ProductsService {
 
   async fetchForwardedProducts({
     sellingCountry,
+    productId,
     page,
     limit,
   }: FetchForwardedProductsQuery): Promise<FetchForwardedProductsOutput> {
     try {
+      let product: Product | undefined;
+      if (productId) {
+        product = await this.products.findOne({ where: { id: productId } });
+        if (!product) {
+          return {
+            ok: false,
+            error: {
+              statusCode: 403,
+              statusType: 'FORBIDDEN',
+              message: 'product-not-found',
+            },
+          };
+        }
+      }
+
       const [forwardedProducts, totalForwardedProducts] =
         await this.productsForward.findAndCount({
           relations: ['product', 'productForwardedUser'],
@@ -285,11 +307,10 @@ export class ProductsService {
           order: {
             id: 'DESC',
           },
-          ...(sellingCountry && {
-            where: {
-              sellingCountry,
-            },
-          }),
+          where: {
+            ...(sellingCountry && { sellingCountry }),
+            ...(product && { product }),
+          },
         });
 
       return {
