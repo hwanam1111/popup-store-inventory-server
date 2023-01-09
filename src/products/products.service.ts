@@ -277,7 +277,11 @@ export class ProductsService {
       await queryRunner.commitTransaction();
 
       const forwardedCount = await this.productsForward.count({
-        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+        where: {
+          barcode: barcodeInput,
+          sellingCountry: sellingCountryInput,
+          forwardHistoryType: 'Forwarding',
+        },
       });
 
       return {
@@ -416,7 +420,11 @@ export class ProductsService {
       await queryRunner.commitTransaction();
 
       const canceledForwardingCount = await this.productsForward.count({
-        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+        where: {
+          barcode: barcodeInput,
+          sellingCountry: sellingCountryInput,
+          forwardHistoryType: 'Cancel',
+        },
       });
 
       return {
@@ -552,9 +560,17 @@ export class ProductsService {
 
       await queryRunner.commitTransaction();
 
-      const defectiveDamageCount = await this.productsForward.count({
-        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
-      });
+      const defectiveDamageCount = await getRepository(ProductForward)
+        .createQueryBuilder('f')
+        .select()
+        .where(
+          sellingCountry ? `f.sellingCountry = '${sellingCountry}'` : '1 = 1',
+        )
+        .andWhere(product ? `productId = ${product.id}` : '1 = 1')
+        .andWhere(
+          '(forwardHistoryType = "defective" OR forwardHistoryType = "damage")',
+        )
+        .getCount();
 
       return {
         ok: true,
