@@ -15,5 +15,13 @@ export class FetchProductsQuery extends PaginationInput {
 }
 
 export class FetchProductsOutput extends PaginationOutput {
-  products?: (Product | { remainingQuantity: number; soldQuantity: number })[];
+  products?: (
+    | Product
+    | {
+        canceledCount: number;
+        soldQuantity: number;
+        defectiveQuantity: number;
+        damageQuantity: number;
+      }
+  )[];
 }

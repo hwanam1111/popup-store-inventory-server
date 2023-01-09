@@ -179,11 +179,35 @@ export class ProductsService {
           },
         });
 
+        const canceledCount = await this.productsForward.count({
+          where: {
+            product,
+            forwardHistoryType: 'Cancel',
+          },
+        });
+
+        const defectiveCount = await this.productsForward.count({
+          where: {
+            product,
+            forwardHistoryType: 'Defective',
+          },
+        });
+
+        const damageCount = await this.productsForward.count({
+          where: {
+            product,
+            forwardHistoryType: 'Damage',
+          },
+        });
+
         const includeInventoryProduct = {
           ...product,
-          soldQuantity: forwardedCount,
-          remainingQuantity: product.productQuantity - forwardedCount,
+          soldQuantity: forwardedCount - canceledCount,
+          canceledQuantity: canceledCount,
+          defectiveQuantity: defectiveCount,
+          damageQuantity: damageCount,
         };
+
         includeInventoryProducts.push(includeInventoryProduct);
       }
 
@@ -257,6 +281,13 @@ export class ProductsService {
         productQuantity: productQuantity - 1,
       });
 
+      const canceledCount = await this.productsForward.count({
+        where: {
+          product,
+          forwardHistoryType: 'Cancel',
+        },
+      });
+
       const forwardedProductHistory = await queryRunner.manager
         .getRepository(ProductForward)
         .save(
@@ -287,7 +318,7 @@ export class ProductsService {
       return {
         ok: true,
         forwardedProduct: forwardedProductHistory,
-        forwardedCount,
+        forwardedCount: forwardedCount - canceledCount,
       };
     } catch (err) {
       await queryRunner.rollbackTransaction();
