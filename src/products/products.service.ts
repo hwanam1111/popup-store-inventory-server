@@ -326,20 +326,24 @@ export class ProductsService {
         }
       }
 
-      const [forwardedProducts, totalForwardedProducts] =
-        await this.productsForward.findAndCount({
-          relations: ['product', 'productForwardedUser'],
-          take: limit,
-          skip: (page - 1) * limit,
-          order: {
-            id: 'DESC',
-          },
-          where: {
-            forwardHistoryType: 'Forwarding',
-            ...(sellingCountry && { sellingCountry }),
-            ...(product && { product }),
-          },
-        });
+      const [forwardedProducts, totalForwardedProducts] = await getRepository(
+        ProductForward,
+      )
+        .createQueryBuilder('f')
+        .select()
+        .leftJoinAndSelect('f.product', 'p')
+        .leftJoinAndSelect('f.productForwardedUser', 'u')
+        .where(
+          sellingCountry ? `f.sellingCountry = '${sellingCountry}'` : '1 = 1',
+        )
+        .andWhere(product ? `productId = ${product.id}` : '1 = 1')
+        .andWhere(
+          '(forwardHistoryType = "Forwarding" OR forwardHistoryType = "Cancel")',
+        )
+        .take(limit)
+        .skip((page - 1) * limit)
+        .orderBy('f.id', 'DESC')
+        .getManyAndCount();
 
       return {
         ok: true,
