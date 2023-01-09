@@ -44,6 +44,10 @@ import {
   FetchCanceledForwardingProductsQuery,
   FetchCanceledForwardingProductsOutput,
 } from '@src/products/dtos/fetch-canceled-forwarding-products.dto';
+import {
+  DefectiveDamageProductInput,
+  DefectiveDamageProductOutput,
+} from '@src/products/dtos/defective-damage-product.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -133,6 +137,21 @@ export class ProductsController {
     return apiResult(
       await this.productsService.fetchCanceledForwardingProducts(
         fetchCanceledForwardingProductsQuery,
+      ),
+    );
+  }
+
+  @Post('/defective-damage')
+  @Role(['Manager', 'RootAdmin'])
+  async defectiveDamageProduct(
+    @Body(ValidationPipe)
+    defectiveDamageProductInput: DefectiveDamageProductInput,
+    @AuthUser() me: User,
+  ): Promise<DefectiveDamageProductOutput> {
+    return apiResult(
+      await this.productsService.defectiveDamageProduct(
+        defectiveDamageProductInput,
+        me,
       ),
     );
   }

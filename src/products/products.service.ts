@@ -35,6 +35,10 @@ import {
   FetchCanceledForwardingProductsQuery,
   FetchCanceledForwardingProductsOutput,
 } from '@src/products/dtos/fetch-canceled-forwarding-products.dto';
+import {
+  DefectiveDamageProductInput,
+  DefectiveDamageProductOutput,
+} from '@src/products/dtos/defective-damage-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -477,6 +481,89 @@ export class ProductsService {
         },
         500,
       );
+    }
+  }
+
+  async defectiveDamageProduct(
+    {
+      barcode: barcodeInput,
+      sellingCountry: sellingCountryInput,
+      forwardHistoryType,
+      memo,
+    }: DefectiveDamageProductInput,
+    me: User,
+  ): Promise<DefectiveDamageProductOutput> {
+    const queryRunner = getConnection().createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const product = await this.products.findOne({
+        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+      });
+
+      if (!product) {
+        return {
+          ok: false,
+          error: {
+            statusCode: 403,
+            statusType: 'FORBIDDEN',
+            message: 'product-not-found',
+          },
+        };
+      }
+
+      const {
+        barcode,
+        productName,
+        productImage,
+        productAmount,
+        sellingCurrency,
+        sellingCountry,
+        productQuantity,
+      } = product;
+
+      const defectiveDamageProductHistory = await queryRunner.manager
+        .getRepository(ProductForward)
+        .save(
+          queryRunner.manager.getRepository(ProductForward).create({
+            forwardHistoryType: forwardHistoryType,
+            barcode,
+            productName,
+            productImage,
+            productAmount,
+            sellingCurrency,
+            sellingCountry,
+            remainingQuantity: productQuantity,
+            memo,
+            product,
+            productForwardedUser: me,
+          }),
+        );
+
+      await queryRunner.commitTransaction();
+
+      const defectiveDamageCount = await this.productsForward.count({
+        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+      });
+
+      return {
+        ok: true,
+        defectiveDamageProduct: defectiveDamageProductHistory,
+        defectiveDamageCount,
+      };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    } finally {
+      await queryRunner.release();
     }
   }
 }

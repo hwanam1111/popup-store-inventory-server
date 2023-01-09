@@ -40,6 +40,9 @@ export class ProductForward extends CoreEntity {
   @Column({ type: 'int' })
   remainingQuantity: number;
 
+  @Column({ length: 10000, nullable: true })
+  memo?: string;
+
   @ManyToOne(() => Product, (product) => product.forwardedProduct, {
     onDelete: 'NO ACTION',
     nullable: false,
