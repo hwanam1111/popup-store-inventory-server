@@ -162,6 +162,7 @@ export class ProductsService {
         const forwardedCount = await this.productsForward.count({
           where: {
             product,
+            forwardHistoryType: 'Forwarding',
           },
         });
 
