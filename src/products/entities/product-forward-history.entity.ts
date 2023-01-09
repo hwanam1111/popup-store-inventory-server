@@ -7,6 +7,8 @@ import {
   countryName,
   CurrencyUnit,
   currencyUnit,
+  ForwardHistoryType,
+  forwardHistoryType,
 } from '@src/products/products.enum';
 
 import { User } from '@src/users/entities/user.entity';
@@ -14,6 +16,9 @@ import { Product } from '@src/products/entities/product.entity';
 
 @Entity()
 export class ProductForward extends CoreEntity {
+  @Column({ type: 'enum', enum: forwardHistoryType })
+  forwardHistoryType: ForwardHistoryType;
+
   @Column({ length: 100 })
   barcode: string;
 

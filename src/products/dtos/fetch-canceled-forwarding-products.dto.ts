@@ -9,7 +9,7 @@ import {
   PaginationOutput,
 } from '@src/common/dtos/pagination.dto';
 
-export class FetchForwardedProductsQuery extends PaginationInput {
+export class FetchCanceledForwardingProductsQuery extends PaginationInput {
   @IsEnum(countryName)
   @IsOptional()
   sellingCountry?: CountryName;
@@ -19,6 +19,6 @@ export class FetchForwardedProductsQuery extends PaginationInput {
   productId?: number;
 }
 
-export class FetchForwardedProductsOutput extends PaginationOutput {
-  forwardedProducts?: ProductForward[];
+export class FetchCanceledForwardingProductsOutput extends PaginationOutput {
+  canceledForwardingProducts?: ProductForward[];
 }
