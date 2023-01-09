@@ -23,6 +23,7 @@ import {
 import {
   FetchProductByBarcodeParam,
   FetchProductByBarcodeOutput,
+  FetchProductByBarcodeQuery,
 } from '@src/products/dtos/fetch-product-by-barcode.dto';
 import {
   FetchProductsOutput,
@@ -62,10 +63,13 @@ export class ProductsController {
   async fetchProductByBarcode(
     @Param(ValidationPipe)
     fetchProductByBarcodeParam: FetchProductByBarcodeParam,
+    @Query(ValidationPipe)
+    fetchProductByBarcodeQuery: FetchProductByBarcodeQuery,
   ): Promise<FetchProductByBarcodeOutput> {
     return apiResult(
       await this.productsService.fetchProductByBarcode(
         fetchProductByBarcodeParam,
+        fetchProductByBarcodeQuery,
       ),
     );
   }

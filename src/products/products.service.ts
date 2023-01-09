@@ -12,6 +12,7 @@ import {
   CreateProductOutput,
 } from '@src/products/dtos/create-product.dto';
 import {
+  FetchProductByBarcodeQuery,
   FetchProductByBarcodeParam,
   FetchProductByBarcodeOutput,
 } from '@src/products/dtos/fetch-product-by-barcode.dto';
@@ -52,12 +53,16 @@ export class ProductsService {
     private readonly productsForward: Repository<ProductForward>,
   ) {}
 
-  async fetchProductByBarcode({
-    barcode,
-  }: FetchProductByBarcodeParam): Promise<FetchProductByBarcodeOutput> {
+  async fetchProductByBarcode(
+    { barcode }: FetchProductByBarcodeParam,
+    { sellingCountry }: FetchProductByBarcodeQuery,
+  ): Promise<FetchProductByBarcodeOutput> {
     try {
       const product = await this.products.findOne({
-        where: { barcode },
+        where: {
+          barcode,
+          ...(sellingCountry && { sellingCountry }),
+        },
       });
 
       if (!product) {
