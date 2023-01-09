@@ -23,6 +23,7 @@ import {
 import {
   FetchProductByBarcodeParam,
   FetchProductByBarcodeOutput,
+  FetchProductByBarcodeQuery,
 } from '@src/products/dtos/fetch-product-by-barcode.dto';
 import {
   FetchProductsOutput,
@@ -44,6 +45,14 @@ import {
   FetchCanceledForwardingProductsQuery,
   FetchCanceledForwardingProductsOutput,
 } from '@src/products/dtos/fetch-canceled-forwarding-products.dto';
+import {
+  DefectiveDamageProductInput,
+  DefectiveDamageProductOutput,
+} from '@src/products/dtos/defective-damage-product.dto';
+import {
+  FetchDefectiveDamageProductsQuery,
+  FetchDefectiveDamageProductsOutput,
+} from '@src/products/dtos/fetch-defective-damage-products.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -54,10 +63,13 @@ export class ProductsController {
   async fetchProductByBarcode(
     @Param(ValidationPipe)
     fetchProductByBarcodeParam: FetchProductByBarcodeParam,
+    @Query(ValidationPipe)
+    fetchProductByBarcodeQuery: FetchProductByBarcodeQuery,
   ): Promise<FetchProductByBarcodeOutput> {
     return apiResult(
       await this.productsService.fetchProductByBarcode(
         fetchProductByBarcodeParam,
+        fetchProductByBarcodeQuery,
       ),
     );
   }
@@ -133,6 +145,34 @@ export class ProductsController {
     return apiResult(
       await this.productsService.fetchCanceledForwardingProducts(
         fetchCanceledForwardingProductsQuery,
+      ),
+    );
+  }
+
+  @Post('/defective-damage')
+  @Role(['Manager', 'RootAdmin'])
+  async defectiveDamageProduct(
+    @Body(ValidationPipe)
+    defectiveDamageProductInput: DefectiveDamageProductInput,
+    @AuthUser() me: User,
+  ): Promise<DefectiveDamageProductOutput> {
+    return apiResult(
+      await this.productsService.defectiveDamageProduct(
+        defectiveDamageProductInput,
+        me,
+      ),
+    );
+  }
+
+  @Get('/defective-damage')
+  @Role(['Any'])
+  async fetchDefectiveDamageProducts(
+    @Query(ValidationPipe)
+    fetchDefectiveDamageProductsQuery: FetchDefectiveDamageProductsQuery,
+  ): Promise<FetchDefectiveDamageProductsOutput> {
+    return apiResult(
+      await this.productsService.fetchDefectiveDamageProducts(
+        fetchDefectiveDamageProductsQuery,
       ),
     );
   }

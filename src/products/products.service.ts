@@ -1,6 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, Repository } from 'typeorm';
+import { getConnection, getRepository, Repository } from 'typeorm';
 
 import { User } from '@src/users/entities/user.entity';
 
@@ -12,6 +12,7 @@ import {
   CreateProductOutput,
 } from '@src/products/dtos/create-product.dto';
 import {
+  FetchProductByBarcodeQuery,
   FetchProductByBarcodeParam,
   FetchProductByBarcodeOutput,
 } from '@src/products/dtos/fetch-product-by-barcode.dto';
@@ -35,6 +36,14 @@ import {
   FetchCanceledForwardingProductsQuery,
   FetchCanceledForwardingProductsOutput,
 } from '@src/products/dtos/fetch-canceled-forwarding-products.dto';
+import {
+  DefectiveDamageProductInput,
+  DefectiveDamageProductOutput,
+} from '@src/products/dtos/defective-damage-product.dto';
+import {
+  FetchDefectiveDamageProductsQuery,
+  FetchDefectiveDamageProductsOutput,
+} from '@src/products/dtos/fetch-defective-damage-products.dto';
 
 @Injectable()
 export class ProductsService {
@@ -44,12 +53,16 @@ export class ProductsService {
     private readonly productsForward: Repository<ProductForward>,
   ) {}
 
-  async fetchProductByBarcode({
-    barcode,
-  }: FetchProductByBarcodeParam): Promise<FetchProductByBarcodeOutput> {
+  async fetchProductByBarcode(
+    { barcode }: FetchProductByBarcodeParam,
+    { sellingCountry }: FetchProductByBarcodeQuery,
+  ): Promise<FetchProductByBarcodeOutput> {
     try {
       const product = await this.products.findOne({
-        where: { barcode },
+        where: {
+          barcode,
+          ...(sellingCountry && { sellingCountry }),
+        },
       });
 
       if (!product) {
@@ -162,14 +175,39 @@ export class ProductsService {
         const forwardedCount = await this.productsForward.count({
           where: {
             product,
+            forwardHistoryType: 'Forwarding',
+          },
+        });
+
+        const canceledCount = await this.productsForward.count({
+          where: {
+            product,
+            forwardHistoryType: 'Cancel',
+          },
+        });
+
+        const defectiveCount = await this.productsForward.count({
+          where: {
+            product,
+            forwardHistoryType: 'Defective',
+          },
+        });
+
+        const damageCount = await this.productsForward.count({
+          where: {
+            product,
+            forwardHistoryType: 'Damage',
           },
         });
 
         const includeInventoryProduct = {
           ...product,
-          soldQuantity: forwardedCount,
-          remainingQuantity: product.productQuantity - forwardedCount,
+          soldQuantity: forwardedCount - canceledCount,
+          canceledQuantity: canceledCount,
+          defectiveQuantity: defectiveCount,
+          damageQuantity: damageCount,
         };
+
         includeInventoryProducts.push(includeInventoryProduct);
       }
 
@@ -243,6 +281,13 @@ export class ProductsService {
         productQuantity: productQuantity - 1,
       });
 
+      const canceledCount = await this.productsForward.count({
+        where: {
+          product,
+          forwardHistoryType: 'Cancel',
+        },
+      });
+
       const forwardedProductHistory = await queryRunner.manager
         .getRepository(ProductForward)
         .save(
@@ -263,13 +308,17 @@ export class ProductsService {
       await queryRunner.commitTransaction();
 
       const forwardedCount = await this.productsForward.count({
-        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+        where: {
+          barcode: barcodeInput,
+          sellingCountry: sellingCountryInput,
+          forwardHistoryType: 'Forwarding',
+        },
       });
 
       return {
         ok: true,
         forwardedProduct: forwardedProductHistory,
-        forwardedCount,
+        forwardedCount: forwardedCount - canceledCount,
       };
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -308,20 +357,24 @@ export class ProductsService {
         }
       }
 
-      const [forwardedProducts, totalForwardedProducts] =
-        await this.productsForward.findAndCount({
-          relations: ['product', 'productForwardedUser'],
-          take: limit,
-          skip: (page - 1) * limit,
-          order: {
-            id: 'DESC',
-          },
-          where: {
-            forwardHistoryType: 'Forwarding',
-            ...(sellingCountry && { sellingCountry }),
-            ...(product && { product }),
-          },
-        });
+      const [forwardedProducts, totalForwardedProducts] = await getRepository(
+        ProductForward,
+      )
+        .createQueryBuilder('f')
+        .select()
+        .leftJoinAndSelect('f.product', 'p')
+        .leftJoinAndSelect('f.productForwardedUser', 'u')
+        .where(
+          sellingCountry ? `f.sellingCountry = '${sellingCountry}'` : '1 = 1',
+        )
+        .andWhere(product ? `productId = ${product.id}` : '1 = 1')
+        .andWhere(
+          '(forwardHistoryType = "Forwarding" OR forwardHistoryType = "Cancel")',
+        )
+        .take(limit)
+        .skip((page - 1) * limit)
+        .orderBy('f.id', 'DESC')
+        .getManyAndCount();
 
       return {
         ok: true,
@@ -402,7 +455,11 @@ export class ProductsService {
       await queryRunner.commitTransaction();
 
       const canceledForwardingCount = await this.productsForward.count({
-        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+        where: {
+          barcode: barcodeInput,
+          sellingCountry: sellingCountryInput,
+          forwardHistoryType: 'Cancel',
+        },
       });
 
       return {
@@ -467,6 +524,154 @@ export class ProductsService {
         totalPages: Math.ceil(totalCanceledForwardingProduct / limit),
         totalResults: totalCanceledForwardingProduct,
         canceledForwardingProducts,
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    }
+  }
+
+  async defectiveDamageProduct(
+    {
+      barcode: barcodeInput,
+      sellingCountry: sellingCountryInput,
+      forwardHistoryType,
+      memo,
+    }: DefectiveDamageProductInput,
+    me: User,
+  ): Promise<DefectiveDamageProductOutput> {
+    const queryRunner = getConnection().createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const product = await this.products.findOne({
+        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+      });
+
+      if (!product) {
+        return {
+          ok: false,
+          error: {
+            statusCode: 403,
+            statusType: 'FORBIDDEN',
+            message: 'product-not-found',
+          },
+        };
+      }
+
+      const {
+        barcode,
+        productName,
+        productImage,
+        productAmount,
+        sellingCurrency,
+        sellingCountry,
+        productQuantity,
+      } = product;
+
+      const defectiveDamageProductHistory = await queryRunner.manager
+        .getRepository(ProductForward)
+        .save(
+          queryRunner.manager.getRepository(ProductForward).create({
+            forwardHistoryType: forwardHistoryType,
+            barcode,
+            productName,
+            productImage,
+            productAmount,
+            sellingCurrency,
+            sellingCountry,
+            remainingQuantity: productQuantity,
+            memo,
+            product,
+            productForwardedUser: me,
+          }),
+        );
+
+      await queryRunner.commitTransaction();
+
+      const defectiveDamageCount = await getRepository(ProductForward)
+        .createQueryBuilder('f')
+        .select()
+        .where(
+          sellingCountry ? `f.sellingCountry = '${sellingCountry}'` : '1 = 1',
+        )
+        .andWhere(product ? `productId = ${product.id}` : '1 = 1')
+        .andWhere(
+          '(forwardHistoryType = "defective" OR forwardHistoryType = "damage")',
+        )
+        .getCount();
+
+      return {
+        ok: true,
+        defectiveDamageProduct: defectiveDamageProductHistory,
+        defectiveDamageCount,
+      };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async fetchDefectiveDamageProducts({
+    sellingCountry,
+    productId,
+    page,
+    limit,
+  }: FetchDefectiveDamageProductsQuery): Promise<FetchDefectiveDamageProductsOutput> {
+    try {
+      let product: Product | undefined;
+      if (productId) {
+        product = await this.products.findOne({ where: { id: productId } });
+        if (!product) {
+          return {
+            ok: false,
+            error: {
+              statusCode: 403,
+              statusType: 'FORBIDDEN',
+              message: 'product-not-found',
+            },
+          };
+        }
+      }
+
+      const [defectiveDamageProducts, totalDefectiveDamageProducts] =
+        await getRepository(ProductForward)
+          .createQueryBuilder('f')
+          .select()
+          .leftJoinAndSelect('f.product', 'p')
+          .leftJoinAndSelect('f.productForwardedUser', 'u')
+          .where(
+            sellingCountry ? `f.sellingCountry = '${sellingCountry}'` : '1 = 1',
+          )
+          .andWhere(product ? `productId = ${product.id}` : '1 = 1')
+          .andWhere(
+            '(forwardHistoryType = "defective" OR forwardHistoryType = "damage")',
+          )
+          .take(limit)
+          .skip((page - 1) * limit)
+          .orderBy('f.id', 'DESC')
+          .getManyAndCount();
+
+      return {
+        ok: true,
+        totalPages: Math.ceil(totalDefectiveDamageProducts / limit),
+        totalResults: totalDefectiveDamageProducts,
+        defectiveDamageProducts,
       };
     } catch (err) {
       throw new HttpException(
