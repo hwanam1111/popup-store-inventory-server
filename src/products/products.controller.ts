@@ -48,6 +48,10 @@ import {
   DefectiveDamageProductInput,
   DefectiveDamageProductOutput,
 } from '@src/products/dtos/defective-damage-product.dto';
+import {
+  FetchDefectiveDamageProductsQuery,
+  FetchDefectiveDamageProductsOutput,
+} from '@src/products/dtos/fetch-defective-damage-products.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -152,6 +156,19 @@ export class ProductsController {
       await this.productsService.defectiveDamageProduct(
         defectiveDamageProductInput,
         me,
+      ),
+    );
+  }
+
+  @Get('/defective-damage')
+  @Role(['Any'])
+  async fetchDefectiveDamageProducts(
+    @Query(ValidationPipe)
+    fetchDefectiveDamageProductsQuery: FetchDefectiveDamageProductsQuery,
+  ): Promise<FetchDefectiveDamageProductsOutput> {
+    return apiResult(
+      await this.productsService.fetchDefectiveDamageProducts(
+        fetchDefectiveDamageProductsQuery,
       ),
     );
   }

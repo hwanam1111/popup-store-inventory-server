@@ -1,6 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, Repository } from 'typeorm';
+import { getConnection, getRepository, Repository } from 'typeorm';
 
 import { User } from '@src/users/entities/user.entity';
 
@@ -39,6 +39,10 @@ import {
   DefectiveDamageProductInput,
   DefectiveDamageProductOutput,
 } from '@src/products/dtos/defective-damage-product.dto';
+import {
+  FetchDefectiveDamageProductsQuery,
+  FetchDefectiveDamageProductsOutput,
+} from '@src/products/dtos/fetch-defective-damage-products.dto';
 
 @Injectable()
 export class ProductsService {
@@ -564,6 +568,63 @@ export class ProductsService {
       );
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async fetchDefectiveDamageProducts({
+    sellingCountry,
+    productId,
+    page,
+    limit,
+  }: FetchDefectiveDamageProductsQuery): Promise<FetchDefectiveDamageProductsOutput> {
+    try {
+      let product: Product | undefined;
+      if (productId) {
+        product = await this.products.findOne({ where: { id: productId } });
+        if (!product) {
+          return {
+            ok: false,
+            error: {
+              statusCode: 403,
+              statusType: 'FORBIDDEN',
+              message: 'product-not-found',
+            },
+          };
+        }
+      }
+
+      const [defectiveDamageProducts, totalDefectiveDamageProducts] =
+        await getRepository(ProductForward)
+          .createQueryBuilder('f')
+          .select()
+          .leftJoinAndSelect('f.product', 'p')
+          .leftJoinAndSelect('f.productForwardedUser', 'u')
+          .where(
+            sellingCountry ? `f.sellingCountry = '${sellingCountry}'` : '1 = 1',
+          )
+          .andWhere(product ? `productId = ${product.id}` : '1 = 1')
+          .andWhere(
+            '(forwardHistoryType = "defective" OR forwardHistoryType = "damage")',
+          )
+          .take(limit)
+          .skip((page - 1) * limit)
+          .orderBy('f.id', 'DESC')
+          .getManyAndCount();
+
+      return {
+        ok: true,
+        totalPages: Math.ceil(totalDefectiveDamageProducts / limit),
+        totalResults: totalDefectiveDamageProducts,
+        defectiveDamageProducts,
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
     }
   }
 }
