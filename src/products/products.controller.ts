@@ -36,6 +36,14 @@ import {
   FetchForwardedProductsQuery,
   FetchForwardedProductsOutput,
 } from '@src/products/dtos/fetch-forwarded-products.dto';
+import {
+  CancelForwardingProductInput,
+  CancelForwardingProductOutput,
+} from '@src/products/dtos/cancel-forwarding-product.dto';
+import {
+  FetchCanceledForwardingProductsQuery,
+  FetchCanceledForwardingProductsOutput,
+} from '@src/products/dtos/fetch-canceled-forwarding-products.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -97,6 +105,34 @@ export class ProductsController {
     return apiResult(
       await this.productsService.fetchForwardedProducts(
         fetchForwardedProductsQuery,
+      ),
+    );
+  }
+
+  @Post('/cancel/forwarding')
+  @Role(['Manager', 'RootAdmin'])
+  async cancelForwardingProduct(
+    @Body(ValidationPipe)
+    cancelForwardingProductInput: CancelForwardingProductInput,
+    @AuthUser() me: User,
+  ): Promise<CancelForwardingProductOutput> {
+    return apiResult(
+      await this.productsService.cancelForwardingProduct(
+        cancelForwardingProductInput,
+        me,
+      ),
+    );
+  }
+
+  @Get('/canceled/forwarding')
+  @Role(['Any'])
+  async fetchCanceledForwardingProducts(
+    @Query(ValidationPipe)
+    fetchCanceledForwardingProductsQuery: FetchCanceledForwardingProductsQuery,
+  ): Promise<FetchCanceledForwardingProductsOutput> {
+    return apiResult(
+      await this.productsService.fetchCanceledForwardingProducts(
+        fetchCanceledForwardingProductsQuery,
       ),
     );
   }

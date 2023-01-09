@@ -27,6 +27,14 @@ import {
   FetchForwardedProductsQuery,
   FetchForwardedProductsOutput,
 } from '@src/products/dtos/fetch-forwarded-products.dto';
+import {
+  CancelForwardingProductInput,
+  CancelForwardingProductOutput,
+} from '@src/products/dtos/cancel-forwarding-product.dto';
+import {
+  FetchCanceledForwardingProductsQuery,
+  FetchCanceledForwardingProductsOutput,
+} from '@src/products/dtos/fetch-canceled-forwarding-products.dto';
 
 @Injectable()
 export class ProductsService {
@@ -239,6 +247,7 @@ export class ProductsService {
         .getRepository(ProductForward)
         .save(
           queryRunner.manager.getRepository(ProductForward).create({
+            forwardHistoryType: 'Forwarding',
             barcode,
             productName,
             productImage,
@@ -308,6 +317,7 @@ export class ProductsService {
             id: 'DESC',
           },
           where: {
+            forwardHistoryType: 'Forwarding',
             ...(sellingCountry && { sellingCountry }),
             ...(product && { product }),
           },
@@ -318,6 +328,145 @@ export class ProductsService {
         totalPages: Math.ceil(totalForwardedProducts / limit),
         totalResults: totalForwardedProducts,
         forwardedProducts,
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    }
+  }
+
+  async cancelForwardingProduct(
+    {
+      barcode: barcodeInput,
+      sellingCountry: sellingCountryInput,
+    }: CancelForwardingProductInput,
+    me: User,
+  ): Promise<CancelForwardingProductOutput> {
+    const queryRunner = getConnection().createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const product = await this.products.findOne({
+        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+      });
+
+      if (!product) {
+        return {
+          ok: false,
+          error: {
+            statusCode: 403,
+            statusType: 'FORBIDDEN',
+            message: 'product-not-found',
+          },
+        };
+      }
+
+      const {
+        barcode,
+        productName,
+        productImage,
+        productAmount,
+        sellingCurrency,
+        sellingCountry,
+        productQuantity,
+      } = product;
+
+      await queryRunner.manager.getRepository(Product).save({
+        id: product.id,
+        productQuantity: productQuantity + 1,
+      });
+
+      const canceledForwardingProductHistory = await queryRunner.manager
+        .getRepository(ProductForward)
+        .save(
+          queryRunner.manager.getRepository(ProductForward).create({
+            forwardHistoryType: 'Cancel',
+            barcode,
+            productName,
+            productImage,
+            productAmount,
+            sellingCurrency,
+            sellingCountry,
+            remainingQuantity: productQuantity + 1,
+            product,
+            productForwardedUser: me,
+          }),
+        );
+
+      await queryRunner.commitTransaction();
+
+      const canceledForwardingCount = await this.productsForward.count({
+        where: { barcode: barcodeInput, sellingCountry: sellingCountryInput },
+      });
+
+      return {
+        ok: true,
+        canceledForwardingProduct: canceledForwardingProductHistory,
+        canceledForwardingCount,
+      };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async fetchCanceledForwardingProducts({
+    sellingCountry,
+    productId,
+    page,
+    limit,
+  }: FetchCanceledForwardingProductsQuery): Promise<FetchCanceledForwardingProductsOutput> {
+    try {
+      let product: Product | undefined;
+      if (productId) {
+        product = await this.products.findOne({ where: { id: productId } });
+        if (!product) {
+          return {
+            ok: false,
+            error: {
+              statusCode: 403,
+              statusType: 'FORBIDDEN',
+              message: 'product-not-found',
+            },
+          };
+        }
+      }
+
+      const [canceledForwardingProducts, totalCanceledForwardingProduct] =
+        await this.productsForward.findAndCount({
+          relations: ['product', 'productForwardedUser'],
+          take: limit,
+          skip: (page - 1) * limit,
+          order: {
+            id: 'DESC',
+          },
+          where: {
+            forwardHistoryType: 'Cancel',
+            ...(sellingCountry && { sellingCountry }),
+            ...(product && { product }),
+          },
+        });
+
+      return {
+        ok: true,
+        totalPages: Math.ceil(totalCanceledForwardingProduct / limit),
+        totalResults: totalCanceledForwardingProduct,
+        canceledForwardingProducts,
       };
     } catch (err) {
       throw new HttpException(
