@@ -59,6 +59,10 @@ import {
   EditProductQuantityInput,
   EditProductQuantityOutput,
 } from '@src/products/dtos/edit-product-quantity.dto';
+import {
+  FetchEditedProductsHistoryQuery,
+  FetchEditedProductsHistoryOutput,
+} from '@src/products/dtos/fetch-edited-products-history.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -197,6 +201,19 @@ export class ProductsController {
         editProductQuantityParam,
         editProductQuantityInput,
         authUser,
+      ),
+    );
+  }
+
+  @Get('/edited-history')
+  @Role(['Any'])
+  async fetchEditedProductsHistory(
+    @Query(ValidationPipe)
+    fetchEditedProductsHistoryParam: FetchEditedProductsHistoryQuery,
+  ): Promise<FetchEditedProductsHistoryOutput> {
+    return apiResult(
+      await this.productsService.fetchEditedProductsHistory(
+        fetchEditedProductsHistoryParam,
       ),
     );
   }
