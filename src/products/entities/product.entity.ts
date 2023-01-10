@@ -8,7 +8,9 @@ import {
 } from '@src/products/products.enum';
 
 import { IncludeSoftDeleteCoreEntity } from '@src/common/entities/common.entity';
+
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
+import { ProductEditHistory } from '@src/products/entities/product-edit-history.entity';
 import { User } from '@src/users/entities/user.entity';
 
 @Entity()
@@ -42,4 +44,10 @@ export class Product extends IncludeSoftDeleteCoreEntity {
 
   @OneToMany(() => ProductForward, (productForward) => productForward.product)
   forwardedProduct: ProductForward[];
+
+  @OneToMany(
+    () => ProductEditHistory,
+    (productEditHistory) => productEditHistory.product,
+  )
+  editProductHistory: ProductEditHistory[];
 }

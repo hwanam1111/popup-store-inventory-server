@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   ValidationPipe,
@@ -53,6 +54,11 @@ import {
   FetchDefectiveDamageProductsQuery,
   FetchDefectiveDamageProductsOutput,
 } from '@src/products/dtos/fetch-defective-damage-products.dto';
+import {
+  EditProductQuantityParam,
+  EditProductQuantityInput,
+  EditProductQuantityOutput,
+} from '@src/products/dtos/edit-product-quantity.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -173,6 +179,24 @@ export class ProductsController {
     return apiResult(
       await this.productsService.fetchDefectiveDamageProducts(
         fetchDefectiveDamageProductsQuery,
+      ),
+    );
+  }
+
+  @Patch('/:productId/quantity')
+  @Role(['Manager', 'RootAdmin'])
+  async editProductQuantity(
+    @Param(ValidationPipe)
+    editProductQuantityParam: EditProductQuantityParam,
+    @Body(ValidationPipe)
+    editProductQuantityInput: EditProductQuantityInput,
+    @AuthUser() authUser: User,
+  ): Promise<EditProductQuantityOutput> {
+    return apiResult(
+      await this.productsService.editProductQuantity(
+        editProductQuantityParam,
+        editProductQuantityInput,
+        authUser,
       ),
     );
   }
