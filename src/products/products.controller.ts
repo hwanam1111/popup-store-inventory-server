@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -63,6 +64,10 @@ import {
   FetchEditedProductsHistoryQuery,
   FetchEditedProductsHistoryOutput,
 } from '@src/products/dtos/fetch-edited-products-history.dto';
+import {
+  DeleteProductParam,
+  DeleteProductOutput,
+} from '@src/products/dtos/delete-product.dto';
 
 @Controller('v1/products')
 export class ProductsController {
@@ -215,6 +220,18 @@ export class ProductsController {
       await this.productsService.fetchEditedProductsHistory(
         fetchEditedProductsHistoryParam,
       ),
+    );
+  }
+
+  @Delete('/:productId')
+  @Role(['Manager', 'RootAdmin'])
+  async deleteProduct(
+    @Param(ValidationPipe)
+    deleteProductParam: DeleteProductParam,
+    @AuthUser() authUser: User,
+  ): Promise<DeleteProductOutput> {
+    return apiResult(
+      await this.productsService.deleteProduct(deleteProductParam, authUser),
     );
   }
 }
