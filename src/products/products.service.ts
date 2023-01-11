@@ -6,6 +6,7 @@ import { User } from '@src/users/entities/user.entity';
 
 import { Product } from '@src/products/entities/product.entity';
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
+import { ProductEditHistory } from '@src/products/entities/product-edit-history.entity';
 
 import {
   CreateProductInput,
@@ -44,6 +45,15 @@ import {
   FetchDefectiveDamageProductsQuery,
   FetchDefectiveDamageProductsOutput,
 } from '@src/products/dtos/fetch-defective-damage-products.dto';
+import {
+  EditProductQuantityParam,
+  EditProductQuantityInput,
+  EditProductQuantityOutput,
+} from '@src/products/dtos/edit-product-quantity.dto';
+import {
+  FetchEditedProductsHistoryQuery,
+  FetchEditedProductsHistoryOutput,
+} from '@src/products/dtos/fetch-edited-products-history.dto';
 
 @Injectable()
 export class ProductsService {
@@ -51,6 +61,8 @@ export class ProductsService {
     @InjectRepository(Product) private readonly products: Repository<Product>,
     @InjectRepository(ProductForward)
     private readonly productsForward: Repository<ProductForward>,
+    @InjectRepository(ProductEditHistory)
+    private readonly productsEditHistory: Repository<ProductEditHistory>,
   ) {}
 
   async fetchProductByBarcode(
@@ -672,6 +684,127 @@ export class ProductsService {
         totalPages: Math.ceil(totalDefectiveDamageProducts / limit),
         totalResults: totalDefectiveDamageProducts,
         defectiveDamageProducts,
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    }
+  }
+
+  async editProductQuantity(
+    { productId }: EditProductQuantityParam,
+    { productQuantity }: EditProductQuantityInput,
+    me: User,
+  ): Promise<EditProductQuantityOutput> {
+    const queryRunner = getConnection().createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const product = await this.products.findOne({
+        where: { id: productId },
+      });
+
+      if (!product) {
+        return {
+          ok: false,
+          error: {
+            statusCode: 403,
+            statusType: 'FORBIDDEN',
+            message: 'product-not-found',
+          },
+        };
+      }
+
+      const existQuantity = product.productQuantity;
+
+      const editedProduct = await queryRunner.manager
+        .getRepository(Product)
+        .save({
+          id: product.id,
+          productQuantity,
+        });
+
+      await queryRunner.manager.getRepository(ProductEditHistory).save(
+        queryRunner.manager.getRepository(ProductEditHistory).create({
+          editedContent: {
+            existQuantity,
+            editedQuantity: productQuantity,
+          },
+          product,
+          productEditUser: me,
+        }),
+      );
+
+      await queryRunner.commitTransaction();
+
+      return {
+        ok: true,
+        editedProduct: {
+          id: editedProduct.id,
+        },
+      };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async fetchEditedProductsHistory({
+    productId,
+    page,
+    limit,
+  }: FetchEditedProductsHistoryQuery): Promise<FetchEditedProductsHistoryOutput> {
+    try {
+      let product: Product | undefined;
+      if (productId) {
+        product = await this.products.findOne({ where: { id: productId } });
+        if (!product) {
+          return {
+            ok: false,
+            error: {
+              statusCode: 403,
+              statusType: 'FORBIDDEN',
+              message: 'product-not-found',
+            },
+          };
+        }
+      }
+
+      const [editedProductHistory, totalEditedProductHistory] =
+        await this.productsEditHistory.findAndCount({
+          relations: ['product', 'productEditUser'],
+          take: limit,
+          skip: (page - 1) * limit,
+          order: {
+            id: 'DESC',
+          },
+          ...(product && {
+            where: {
+              product,
+            },
+          }),
+        });
+
+      return {
+        ok: true,
+        totalPages: Math.ceil(totalEditedProductHistory / limit),
+        totalResults: totalEditedProductHistory,
+        editedProductHistory,
       };
     } catch (err) {
       throw new HttpException(
