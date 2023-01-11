@@ -8,6 +8,7 @@ import { IncludeSoftDeleteCoreEntity } from '@src/common/entities/common.entity'
 import { Product } from '@src/products/entities/product.entity';
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 import { ProductEditHistory } from '@src/products/entities/product-edit-history.entity';
+import { ProductDeleteHistory } from '@src/products/entities/product-delete-history.entity';
 
 const userRole = {
   ReadOnly: 'ReadOnly',
@@ -44,6 +45,12 @@ export class User extends IncludeSoftDeleteCoreEntity {
     (productEditHistory) => productEditHistory.productEditUser,
   )
   editProductHistory: ProductEditHistory[];
+
+  @OneToMany(
+    () => ProductDeleteHistory,
+    (productDeleteHistory) => productDeleteHistory.productDeleteUser,
+  )
+  deleteProductHistory: ProductDeleteHistory[];
 
   @BeforeInsert()
   @BeforeUpdate()

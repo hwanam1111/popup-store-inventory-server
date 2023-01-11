@@ -7,6 +7,7 @@ import { User } from '@src/users/entities/user.entity';
 import { Product } from '@src/products/entities/product.entity';
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 import { ProductEditHistory } from '@src/products/entities/product-edit-history.entity';
+import { ProductDeleteHistory } from '@src/products/entities/product-delete-history.entity';
 
 import {
   CreateProductInput,
@@ -54,6 +55,10 @@ import {
   FetchEditedProductsHistoryQuery,
   FetchEditedProductsHistoryOutput,
 } from '@src/products/dtos/fetch-edited-products-history.dto';
+import {
+  DeleteProductParam,
+  DeleteProductOutput,
+} from '@src/products/dtos/delete-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -814,6 +819,64 @@ export class ProductsService {
         },
         500,
       );
+    }
+  }
+
+  async deleteProduct(
+    { productId }: DeleteProductParam,
+    me: User,
+  ): Promise<DeleteProductOutput> {
+    const queryRunner = getConnection().createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const product = await this.products.findOne({
+        where: { id: productId },
+      });
+
+      if (!product) {
+        return {
+          ok: false,
+          error: {
+            statusCode: 403,
+            statusType: 'FORBIDDEN',
+            message: 'product-not-found',
+          },
+        };
+      }
+
+      await queryRunner.manager.getRepository(Product).softDelete({
+        id: product.id,
+      });
+
+      await queryRunner.manager.getRepository(ProductDeleteHistory).save(
+        queryRunner.manager.getRepository(ProductDeleteHistory).create({
+          product,
+          productDeleteUser: me,
+        }),
+      );
+
+      await queryRunner.commitTransaction();
+
+      return {
+        ok: true,
+        deletedProduct: {
+          id: productId,
+        },
+      };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    } finally {
+      await queryRunner.release();
     }
   }
 }
