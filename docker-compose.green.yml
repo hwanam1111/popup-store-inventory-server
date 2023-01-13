@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  create-jump-api-server:
+    build: .
+    container_name: createjump-inventory-backend-server
+    restart: always
+    environment:
+      - TZ=Asia/Seoul
+    ports:
+      - '3001:3000'

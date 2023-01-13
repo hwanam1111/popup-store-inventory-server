@@ -13,6 +13,22 @@ import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 
 import { CommonModule } from '@src/common/common.module';
 
+import { JwtModule } from '@src/jwt/jwt.module';
+import { JwtMiddleware } from '@src/jwt/jwt.middleware';
+
+import { FilesModule } from '@src/files/files.module';
+
+import { AuthModule } from '@src/auth/auth.module';
+
+import { User } from '@src/users/entities/user.entity';
+import { UsersModule } from '@src/users/users.module';
+
+import { Product } from '@src/products/entities/product.entity';
+import { ProductForward } from '@src/products/entities/product-forward-history.entity';
+import { ProductEditHistory } from '@src/products/entities/product-edit-history.entity';
+import { ProductDeleteHistory } from '@src/products/entities/product-delete-history.entity';
+import { ProductsModule } from '@src/products/products.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,7 +64,13 @@ import { CommonModule } from '@src/common/common.module';
       bigNumberStrings: false,
       logging: false,
       charset: 'utf8mb4',
-      entities: [],
+      entities: [
+        User,
+        Product,
+        ProductForward,
+        ProductEditHistory,
+        ProductDeleteHistory,
+      ],
     }),
     ScheduleModule.forRoot(),
     I18nModule.forRoot({
@@ -59,16 +81,30 @@ import { CommonModule } from '@src/common/common.module';
       },
       resolvers: [new HeaderResolver(['x-user-lang'])],
     }),
+    JwtModule.forRoot({
+      privateKey: process.env.JWT_PRIVATE_KEY,
+    }),
+    FilesModule.forRoot({
+      awsS3Url: process.env.AWS_S3_URL,
+      awsS3AccessKey: process.env.AWS_S3_ACCESS_KEY,
+      awsS3SecretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
+      awsS3BucketName: process.env.AWS_S3_BUCKET_NAME,
+      awsS3Region: process.env.AWS_S3_REGION,
+      awsCloudFrontResUrl: process.env.AWS_CLOUD_FRONT_RES_URL,
+    }),
     CommonModule,
+    AuthModule,
+    UsersModule,
+    ProductsModule,
   ],
   controllers: [],
   providers: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // consumer.apply(JwtMiddleware).forRoutes({
-    //   path: '*',
-    //   method: RequestMethod.ALL,
-    // });
+    consumer.apply(JwtMiddleware).forRoutes({
+      path: '*',
+      method: RequestMethod.ALL,
+    });
   }
 }
