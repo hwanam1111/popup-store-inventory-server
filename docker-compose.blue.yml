@@ -1,9 +1,9 @@
 version: '3'
 
 services:
-  create-jump-api-server:
+  createjump-inventory-backend-server:
     build: .
-    container_name: createjump-inventory-backend-server
+    container_name: createjump-inventory-backend-server-blue
     restart: always
     environment:
       - TZ=Asia/Seoul
