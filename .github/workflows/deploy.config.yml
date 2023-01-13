@@ -1,0 +1,68 @@
+name: Code Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@master
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.4.1
+        with:
+          node-version: 17.8.0
+
+      - name: Cache node modules
+        uses: actions/cache@v1
+        with:
+          path: node_modules
+          key: ${{ runner.OS }}-master-build-${{ hashFiles('**/package-lock.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+            ${{ runner.OS }}-
+
+      - name: Install Dependencies
+        run: npm install --save-dev --force
+
+      - name: Create Env File
+        run: |
+          touch .env.prod
+          echo SERVER_PORT=${{ secrets.SERVER_PORT }} >> .env.prod
+          echo WEB_FRONT_URL=${{ secrets.WEB_FRONT_URL }} >> .env.prod
+          echo DB_HOST=${{ secrets.DB_HOST }} >> .env.prod
+          echo DB_PORT=${{ secrets.DB_PORT }} >> .env.prod
+          echo DB_USERNAME=${{ secrets.DB_USERNAME }} >> .env.prod
+          echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env.prod
+          echo DB_NAME=${{ secrets.DB_NAME }} >> .env.prod
+          echo JWT_PRIVATE_KEY=${{ secrets.JWT_PRIVATE_KEY }} >> .env.prod
+          echo AWS_S3_URL=${{ secrets.AWS_S3_URL }} >> .env.prod
+          echo AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }} >> .env.prod
+          echo AWS_S3_SECRET_ACCESS_KEY=${{ secrets.AWS_S3_SECRET_ACCESS_KEY }} >> .env.prod
+          echo AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }} >> .env.prod
+          echo AWS_S3_REGION=${{ secrets.AWS_S3_REGION }} >> .env.prod
+          echo AWS_CLOUD_FRONT_RES_URL=${{ secrets.AWS_CLOUD_FRONT_RES_URL }} >> .env.prod
+          echo OXR_APP_ID=${{ secrets.OXR_APP_ID }} >> .env.prod
+          cat .env.prod
+
+      - name: Build Project
+        run: npm run build
+
+      - name: AWS Configure
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_DEPLOY_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: AWS S3 Upload
+        run: aws deploy push --application-name createjump-product-inventory-backend --description "create jump inventory backend server deploy" --s3-location s3://createjump-product-inventory/deploy_$IMAGE_TAG.zip --source .
+
+      - name: Code Deploy
+        run: aws deploy create-deployment --application-name createjump-product-inventory-backend --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name deploy-backend-server-group --s3-location bucket=createjump-product-inventory,bundleType=zip,key=deploy_$IMAGE_TAG.zip
