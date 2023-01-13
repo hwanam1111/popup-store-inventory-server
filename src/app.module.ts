@@ -13,6 +13,8 @@ import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 
 import { CommonModule } from '@src/common/common.module';
 
+import { ServerModule } from '@src/server/server.module';
+
 import { JwtModule } from '@src/jwt/jwt.module';
 import { JwtMiddleware } from '@src/jwt/jwt.middleware';
 
@@ -93,6 +95,7 @@ import { ProductsModule } from '@src/products/products.module';
       awsCloudFrontResUrl: process.env.AWS_CLOUD_FRONT_RES_URL,
     }),
     CommonModule,
+    ServerModule,
     AuthModule,
     UsersModule,
     ProductsModule,
