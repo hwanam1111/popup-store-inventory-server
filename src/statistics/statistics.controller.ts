@@ -9,6 +9,10 @@ import {
   FetchDaysRevenueOutput,
   FetchDaysRevenueQuery,
 } from '@src/statistics/dtos/fetch-days-revenue.dto';
+import {
+  FetchDaysForwardedProductsQuery,
+  FetchDaysForwardedProductsOutput,
+} from '@src/statistics/dtos/fetch-days-forwarded-products.dto';
 
 @Controller('v1/statistics')
 export class StatisticsController {
@@ -21,6 +25,19 @@ export class StatisticsController {
   ): Promise<FetchDaysRevenueOutput> {
     return apiResult(
       await this.statisticsService.fetchDaysRevenue(fetchDaysRevenueQuery),
+    );
+  }
+
+  @Get('/days/forwarded-products-count')
+  @Role(['Any'])
+  async fetchDaysForwardedProductsCount(
+    @Query(ValidationPipe)
+    fetchDaysForwardedProductsQuery: FetchDaysForwardedProductsQuery,
+  ): Promise<FetchDaysForwardedProductsOutput> {
+    return apiResult(
+      await this.statisticsService.fetchDaysForwardedProductsCount(
+        fetchDaysForwardedProductsQuery,
+      ),
     );
   }
 }
