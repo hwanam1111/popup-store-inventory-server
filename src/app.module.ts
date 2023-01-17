@@ -31,6 +31,8 @@ import { ProductEditHistory } from '@src/products/entities/product-edit-history.
 import { ProductDeleteHistory } from '@src/products/entities/product-delete-history.entity';
 import { ProductsModule } from '@src/products/products.module';
 
+import { StatisticsModule } from '@src/statistics/statistics.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -99,6 +101,7 @@ import { ProductsModule } from '@src/products/products.module';
     AuthModule,
     UsersModule,
     ProductsModule,
+    StatisticsModule,
   ],
   controllers: [],
   providers: [],
