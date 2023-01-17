@@ -32,17 +32,29 @@ export class StatisticsService {
         )
         .addSelect('SUM(f.productAmount) AS totalProductAmount')
         .where(country ? `f.sellingCountry = '${country}'` : '1 = 1')
+        .andWhere('f.forwardHistoryType = "Forwarding"')
         .groupBy('date')
         .orderBy('date', 'DESC')
         .limit(10)
         .getRawMany();
 
       const daysRevenueChart = {};
-      daysRevenue.reverse().forEach((data) => {
-        daysRevenueChart[data.date] = Number(
-          data.totalProductAmount.toFixed(2),
+      for (const dayRevenue of daysRevenue.reverse()) {
+        const { totalCanceledAmount } = await getRepository(ProductForward)
+          .createQueryBuilder('f')
+          .select([])
+          .addSelect('SUM(f.productAmount) AS totalCanceledAmount')
+          .where(country ? `f.sellingCountry = '${country}'` : '1 = 1')
+          .andWhere('forwardHistoryType = "Cancel"')
+          .andWhere(`DATE(createdAt) = '${dayRevenue.date}'`)
+          .getRawOne();
+
+        daysRevenueChart[dayRevenue.date] = Number(
+          (
+            Number(dayRevenue.totalProductAmount) - Number(totalCanceledAmount)
+          ).toFixed(2),
         );
-      });
+      }
 
       return {
         ok: true,
