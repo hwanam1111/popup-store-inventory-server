@@ -13,6 +13,10 @@ import {
   FetchDaysForwardedProductsQuery,
   FetchDaysForwardedProductsOutput,
 } from '@src/statistics/dtos/fetch-days-forwarded-products.dto';
+import {
+  FetchDaysDefectiveDamageProductsQuery,
+  FetchDaysDefectiveDamageProductsOutput,
+} from '@src/statistics/dtos/fetch-days-defective-damage-products.dto';
 
 @Controller('v1/statistics')
 export class StatisticsController {
@@ -37,6 +41,19 @@ export class StatisticsController {
     return apiResult(
       await this.statisticsService.fetchDaysForwardedProductsCount(
         fetchDaysForwardedProductsQuery,
+      ),
+    );
+  }
+
+  @Get('/days/defective-damage-products-count')
+  @Role(['Any'])
+  async fetchDefectiveDamageProductsCount(
+    @Query(ValidationPipe)
+    fetchDaysDefectiveDamageProductsQuery: FetchDaysDefectiveDamageProductsQuery,
+  ): Promise<FetchDaysDefectiveDamageProductsOutput> {
+    return apiResult(
+      await this.statisticsService.fetchDefectiveDamageProductsCount(
+        fetchDaysDefectiveDamageProductsQuery,
       ),
     );
   }
