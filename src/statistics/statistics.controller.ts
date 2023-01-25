@@ -17,6 +17,10 @@ import {
   FetchDaysDefectiveDamageProductsQuery,
   FetchDaysDefectiveDamageProductsOutput,
 } from '@src/statistics/dtos/fetch-days-defective-damage-products.dto';
+import {
+  FetchDaysSynthesisQuery,
+  FetchDaysSynthesisOutput,
+} from '@src/statistics/dtos/fetch-days-synthesis.dto';
 
 @Controller('v1/statistics')
 export class StatisticsController {
@@ -55,6 +59,17 @@ export class StatisticsController {
       await this.statisticsService.fetchDefectiveDamageProductsCount(
         fetchDaysDefectiveDamageProductsQuery,
       ),
+    );
+  }
+
+  @Get('/days/synthesis')
+  @Role(['Any'])
+  async fetchDaysSynthesis(
+    @Query(ValidationPipe)
+    fetchDaysSynthesisQuery: FetchDaysSynthesisQuery,
+  ): Promise<FetchDaysSynthesisOutput> {
+    return apiResult(
+      await this.statisticsService.fetchDaysSynthesis(fetchDaysSynthesisQuery),
     );
   }
 }
