@@ -69,7 +69,7 @@ import { Timezone } from '@src/timezone/entities/timezone.entity';
       database: process.env.DB_NAME,
       synchronize: process.env.NODE_ENV !== 'prod',
       bigNumberStrings: false,
-      logging: false,
+      logging: true,
       charset: 'utf8mb4',
       entities: [
         User,
