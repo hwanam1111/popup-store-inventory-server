@@ -1,6 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { getRepository } from 'typeorm';
 
+import { Product } from '@src/products/entities/product.entity';
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 
 import { TimezoneService } from '@src/timezone/timezone.service';
@@ -17,6 +18,10 @@ import {
   FetchDaysDefectiveDamageProductsQuery,
   FetchDaysDefectiveDamageProductsOutput,
 } from '@src/statistics/dtos/fetch-days-defective-damage-products.dto';
+import {
+  FetchDaysSynthesisOutput,
+  FetchDaysSynthesisQuery,
+} from '@src/statistics/dtos/fetch-days-synthesis.dto';
 
 @Injectable()
 export class StatisticsService {
@@ -187,6 +192,99 @@ export class StatisticsService {
       return {
         ok: true,
         chart: defectiveDamageProductsCountChart,
+      };
+    } catch (err) {
+      throw new HttpException(
+        {
+          ok: false,
+          serverError: err,
+        },
+        500,
+      );
+    }
+  }
+
+  async fetchDaysSynthesis({
+    country,
+    timezone,
+    selectDate,
+  }: FetchDaysSynthesisQuery): Promise<FetchDaysSynthesisOutput> {
+    try {
+      const { addOrRemoveTime } = await this.timezoneService.fetchTimezone({
+        timezone,
+      });
+      const products = await getRepository(Product)
+        .createQueryBuilder('p')
+        .select([
+          'p.id',
+          'p.barcode',
+          'p.productName',
+          'p.productAmount',
+          'p.sellingCurrency',
+        ])
+        .where(country ? `p.sellingCountry = '${country}'` : '1 = 1')
+        .limit(100)
+        .getMany();
+
+      const data: FetchDaysSynthesisOutput['result'] =
+        [] as FetchDaysSynthesisOutput['result'];
+      for (const product of products) {
+        const productForwardCount = await getRepository(ProductForward)
+          .createQueryBuilder('f')
+          .select([])
+          .where(`f.productId = ${product.id}`)
+          .andWhere('f.forwardHistoryType = "Forwarding"')
+          .andWhere(
+            `DATE(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}")) = :selectDate`,
+            { selectDate },
+          )
+          .getCount();
+
+        const productForwardCancelCount = await getRepository(ProductForward)
+          .createQueryBuilder('f')
+          .select([])
+          .where(`f.productId = ${product.id}`)
+          .andWhere('f.forwardHistoryType = "Cancel"')
+          .andWhere(
+            `DATE(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}")) = :selectDate`,
+            { selectDate },
+          )
+          .getCount();
+
+        const productDefectiveCount = await getRepository(ProductForward)
+          .createQueryBuilder('f')
+          .select([])
+          .where(`f.productId = ${product.id}`)
+          .andWhere('f.forwardHistoryType = "Defective"')
+          .andWhere(
+            `DATE(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}")) = :selectDate`,
+            { selectDate },
+          )
+          .getCount();
+
+        const productDamageCount = await getRepository(ProductForward)
+          .createQueryBuilder('f')
+          .select([])
+          .where(`f.productId = ${product.id}`)
+          .andWhere('f.forwardHistoryType = "Damage"')
+          .andWhere(
+            `DATE(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}")) = :selectDate`,
+            { selectDate },
+          )
+          .getCount();
+
+        data.push({
+          ...product,
+          productForwardCount,
+          productForwardCancelCount,
+          productDefectiveCount,
+          productDamageCount,
+        });
+      }
+
+      return {
+        ok: true,
+        result: data,
       };
     } catch (err) {
       throw new HttpException(
