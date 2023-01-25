@@ -3,6 +3,8 @@ import { getRepository } from 'typeorm';
 
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 
+import { TimezoneService } from '@src/timezone/timezone.service';
+
 import {
   FetchDaysRevenueOutput,
   FetchDaysRevenueQuery,
@@ -18,17 +20,21 @@ import {
 
 @Injectable()
 export class StatisticsService {
-  // constructor() {}
+  constructor(private readonly timezoneService: TimezoneService) {}
 
   async fetchDaysRevenue({
     country,
+    timezone,
   }: FetchDaysRevenueQuery): Promise<FetchDaysRevenueOutput> {
     try {
+      const { addOrRemoveTime } = await this.timezoneService.fetchTimezone({
+        timezone,
+      });
       const daysRevenue = await getRepository(ProductForward)
         .createQueryBuilder('f')
         .select([])
         .addSelect(
-          'CONCAT(MID(createdAt, 1, 4), "-", MID(createdAt, 6, 2), "-", MID(createdAt, 9, 2)) AS date',
+          `CONCAT(MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 1, 4), "-", MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 6, 2), "-", MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 9, 2)) AS date`,
         )
         .addSelect('SUM(f.productAmount) AS totalProductAmount')
         .where(country ? `f.sellingCountry = '${country}'` : '1 = 1')
@@ -46,7 +52,9 @@ export class StatisticsService {
           .addSelect('SUM(f.productAmount) AS totalCanceledAmount')
           .where(country ? `f.sellingCountry = '${country}'` : '1 = 1')
           .andWhere('forwardHistoryType = "Cancel"')
-          .andWhere(`DATE(createdAt) = '${dayRevenue.date}'`)
+          .andWhere(
+            `DATE(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}")) = '${dayRevenue.date}'`,
+          )
           .getRawOne();
 
         daysRevenueChart[dayRevenue.date] = Number(
@@ -73,13 +81,17 @@ export class StatisticsService {
 
   async fetchDaysForwardedProductsCount({
     country,
+    timezone,
   }: FetchDaysForwardedProductsQuery): Promise<FetchDaysForwardedProductsOutput> {
     try {
+      const { addOrRemoveTime } = await this.timezoneService.fetchTimezone({
+        timezone,
+      });
       const daysForwardedProducts = await getRepository(ProductForward)
         .createQueryBuilder('f')
         .select([])
         .addSelect(
-          'CONCAT(MID(createdAt, 1, 4), "-", MID(createdAt, 6, 2), "-", MID(createdAt, 9, 2)) AS date',
+          `CONCAT(MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 1, 4), "-", MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 6, 2), "-", MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 9, 2)) AS date`,
         )
         .addSelect('COUNT(f.id) AS totalForwardedCount')
         .where(country ? `f.sellingCountry = '${country}'` : '1 = 1')
@@ -97,7 +109,9 @@ export class StatisticsService {
           .addSelect('COUNT(f.id) AS totalCanceledCount')
           .where(country ? `f.sellingCountry = '${country}'` : '1 = 1')
           .andWhere('forwardHistoryType = "Cancel"')
-          .andWhere(`DATE(createdAt) = '${daysForwardedProductsCount.date}'`)
+          .andWhere(
+            `DATE(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}")) = '${daysForwardedProductsCount}'`,
+          )
           .getRawOne();
 
         daysForwardedProductsChart[daysForwardedProductsCount.date] = Number(
@@ -122,13 +136,17 @@ export class StatisticsService {
 
   async fetchDefectiveDamageProductsCount({
     country,
+    timezone,
   }: FetchDaysDefectiveDamageProductsQuery): Promise<FetchDaysDefectiveDamageProductsOutput> {
     try {
+      const { addOrRemoveTime } = await this.timezoneService.fetchTimezone({
+        timezone,
+      });
       const defectiveDamageProductsCount = await getRepository(ProductForward)
         .createQueryBuilder('f')
         .select(['f.forwardHistoryType AS forwardHistoryType'])
         .addSelect(
-          'CONCAT(MID(createdAt, 1, 4), "-", MID(createdAt, 6, 2), "-", MID(createdAt, 9, 2)) AS date',
+          `CONCAT(MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 1, 4), "-", MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 6, 2), "-", MID(CONVERT_TZ(createdAt, "+00:00", "${addOrRemoveTime}"), 9, 2)) AS date`,
         )
         .addSelect('COUNT(f.id) AS totalDefectiveDamageCount')
         .where(country ? `f.sellingCountry = '${country}'` : '1 = 1')

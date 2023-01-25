@@ -33,6 +33,9 @@ import { ProductsModule } from '@src/products/products.module';
 
 import { StatisticsModule } from '@src/statistics/statistics.module';
 
+import { TimezoneModule } from '@src/timezone/timezone.module';
+import { Timezone } from '@src/timezone/entities/timezone.entity';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -74,6 +77,7 @@ import { StatisticsModule } from '@src/statistics/statistics.module';
         ProductForward,
         ProductEditHistory,
         ProductDeleteHistory,
+        Timezone,
       ],
     }),
     ScheduleModule.forRoot(),
@@ -102,6 +106,7 @@ import { StatisticsModule } from '@src/statistics/statistics.module';
     UsersModule,
     ProductsModule,
     StatisticsModule,
+    TimezoneModule,
   ],
   controllers: [],
   providers: [],

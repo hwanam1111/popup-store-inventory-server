@@ -6,9 +6,12 @@ import { StatisticsService } from '@src/statistics/statistics.service';
 
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 
+import { Timezone } from '@src/timezone/entities/timezone.entity';
+import { TimezoneService } from '@src/timezone/timezone.service';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductForward])],
+  imports: [TypeOrmModule.forFeature([ProductForward, Timezone])],
   controllers: [StatisticsController],
-  providers: [StatisticsService],
+  providers: [StatisticsService, TimezoneService],
 })
 export class StatisticsModule {}
