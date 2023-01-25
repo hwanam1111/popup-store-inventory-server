@@ -31,6 +31,11 @@ import { ProductEditHistory } from '@src/products/entities/product-edit-history.
 import { ProductDeleteHistory } from '@src/products/entities/product-delete-history.entity';
 import { ProductsModule } from '@src/products/products.module';
 
+import { StatisticsModule } from '@src/statistics/statistics.module';
+
+import { TimezoneModule } from '@src/timezone/timezone.module';
+import { Timezone } from '@src/timezone/entities/timezone.entity';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -72,6 +77,7 @@ import { ProductsModule } from '@src/products/products.module';
         ProductForward,
         ProductEditHistory,
         ProductDeleteHistory,
+        Timezone,
       ],
     }),
     ScheduleModule.forRoot(),
@@ -99,6 +105,8 @@ import { ProductsModule } from '@src/products/products.module';
     AuthModule,
     UsersModule,
     ProductsModule,
+    StatisticsModule,
+    TimezoneModule,
   ],
   controllers: [],
   providers: [],
