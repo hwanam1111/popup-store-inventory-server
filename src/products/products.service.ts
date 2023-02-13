@@ -352,12 +352,17 @@ export class ProductsService {
     }
   }
 
-  async fetchForwardedProducts({
-    sellingCountry,
-    productId,
-    page,
-    limit,
-  }: FetchForwardedProductsQuery): Promise<FetchForwardedProductsOutput> {
+  async fetchForwardedProducts(
+    me: User,
+    {
+      sellingCountry,
+      productId,
+      isOnlyMeData,
+      page,
+      limit,
+    }: FetchForwardedProductsQuery,
+  ): Promise<FetchForwardedProductsOutput> {
+    console.log('!!!!!', isOnlyMeData);
     try {
       let product: Product | undefined;
       if (productId) {
@@ -388,6 +393,7 @@ export class ProductsService {
         .andWhere(
           '(forwardHistoryType = "Forwarding" OR forwardHistoryType = "Cancel")',
         )
+        .andWhere(isOnlyMeData === 'true' ? `u.id = ${me.id}` : '1 = 1')
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy('f.id', 'DESC')

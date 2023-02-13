@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 
 import { ProductForward } from '@src/products/entities/product-forward-history.entity';
 
@@ -17,6 +17,10 @@ export class FetchForwardedProductsQuery extends PaginationInput {
   @IsNumber()
   @IsOptional()
   productId?: number;
+
+  @IsOptional()
+  @IsString()
+  isOnlyMeData: string;
 }
 
 export class FetchForwardedProductsOutput extends PaginationOutput {

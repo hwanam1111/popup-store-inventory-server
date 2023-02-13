@@ -126,11 +126,13 @@ export class ProductsController {
   @Get('/forwarded')
   @Role(['Any'])
   async fetchForwardedProducts(
+    @AuthUser() me: User,
     @Query(ValidationPipe)
     fetchForwardedProductsQuery: FetchForwardedProductsQuery,
   ): Promise<FetchForwardedProductsOutput> {
     return apiResult(
       await this.productsService.fetchForwardedProducts(
+        me,
         fetchForwardedProductsQuery,
       ),
     );
