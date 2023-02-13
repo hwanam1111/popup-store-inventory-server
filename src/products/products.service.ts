@@ -393,7 +393,9 @@ export class ProductsService {
         .andWhere(
           '(forwardHistoryType = "Forwarding" OR forwardHistoryType = "Cancel")',
         )
-        .andWhere(isOnlyMeData === 'true' ? `u.id = ${me.id}` : '1 = 1')
+        .andWhere(
+          isOnlyMeData === 'true' ? `u.id = ${me.id}` : `u.id = ${me.id}`,
+        ) // 임시 추가
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy('f.id', 'DESC')
